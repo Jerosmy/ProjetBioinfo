@@ -46,3 +46,29 @@ git pull
 
 - Use `git config --global credential.helper wincred` to cache credentials.
 - Never share your token. You can revoke it in your GitHub settings.
+
+---
+
+## Step 5: Handling Large Data Files (Google Drive)
+
+GitHub does not allow pushing files over 100MB. Use Google Drive for large datasets.
+
+### Recommended Setup
+
+1. Create a folder in Google Drive (e.g., `ProjetBioinfo_data`)
+2. Share it with collaborators
+3. Sync it locally using the Google Drive desktop app
+4. Create a folder `data/` in your project and copy files from Drive manually
+
+Make sure to add `data/` to your `.gitignore`:
+
+```
+data/
+```
+
+This prevents Git from trying to track large files.
+
+### Summary
+
+- Code is tracked via GitHub
+- Data is stored in Drive and manually managed per collaborator
