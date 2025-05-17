@@ -1,0 +1,29 @@
+# macOS system files
+.DS_Store
+
+# VS Code settings
+.vscode/
+
+# Python cache and bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Virtual environment folders
+env/
+venv/
+.venv/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
