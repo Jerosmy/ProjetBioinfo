@@ -7,32 +7,24 @@ https://git-scm.com/
 
 Install it with default settings.
 
-## Step 2: Generate a GitHub Token
+## Step 2: Download gitHub desktop
 
-1. Go to: https://github.com/settings/personal-access-tokens
-2. Click **"Generate new token (fine-grained)"**
-3. Fill in:
-   - Repository access: Select only `ProjetBioinfo`
-   - Permissions: Enable `Read and Write` under "Repository permissions"
-   - Set expiration to 30 days or as needed
-4. Click "Generate token"
-5. **Copy the token and save it** (you will not see it again)
+https://desktop.github.com/download/
+
+Login github using your account that has been granted access to the GitHub
+Choose the Repository and open it in VS code (option should be visible in the right pannel)
 
 ## Step 3: Clone the Repository
 
-Open Git Bash and run:
-
-git clone https://github.com/USERNAME/ProjetBioinfo.git
-
-When prompted:
-- Enter your GitHub username
-- Paste your token as the password
+choose the "clone repository" option on first opening, it will create a folder in the GitHub files.
 
 ## Step 4: Work with Git
 
-cd ProjetBioinfo
+You can eddit things in VS normally. Once you're happy with the changes, save them, 
+go to the GitHub app and add a short commentary about your changes. Hit 'Commit to main', 
+then hit the 'Push' button on the top of the window. Your changes have now been uploaded to github.
 
-To add and push changes:
+To add and push changes manually in the terminal:
 
 git add .
 git commit -m "Your message"
@@ -56,11 +48,11 @@ GitHub does not allow pushing files over 100MB. Use Google Drive for large datas
 ### Recommended Setup
 
 1. Create a folder in Google Drive (e.g., `ProjetBioinfo_data`)
-2. Share it with collaborators
+2. Share it with collaborators, or add a shortcut from the shared file in your main Drive
 3. Sync it locally using the Google Drive desktop app
-4. Create a folder `data/` in your project and copy files from Drive manually
+4. Create a shortcut named 'data' in the cloned repository on your machine that links to the data folder on your drive.
 
-Make sure to add `data/` to your `.gitignore`:
+Make sure to add `data/` to your `.gitignore` (it should already be in there):
 
 ```
 data/
