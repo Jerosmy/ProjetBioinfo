@@ -1,4 +1,4 @@
-# GitHub Setup Guide (Windows)
+# GitHub Setup Guide
 
 ## Step 1: Install Git
 
