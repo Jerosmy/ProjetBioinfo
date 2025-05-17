@@ -28,5 +28,6 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-#Data 
+#Data and requirements
 data/
+requirements.txt
