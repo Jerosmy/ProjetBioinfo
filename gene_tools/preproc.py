@@ -25,7 +25,7 @@ def foldersLoad(root_path, folders):
 
 
 
-def cleanDic(trait_data, trait_name):
+def clean_trait_data(trait_data, trait_name):
     """
     Clean and merge dataframes related to a specific trait.
 
@@ -42,8 +42,11 @@ def cleanDic(trait_data, trait_name):
         method_name = df['Method'][0].split('-')[0]
         main_data = {
             'EnsemblId': df['EnsemblId'],
-            f'{method_name}_percentile': df['Percentile']
+            f'{method_name}_p_value': df['p_value']
         }
+
+        if 'b_ivw' in df.columns:
+            main_data[f'{method_name}_b_ivw'] = df['b_ivw']
 
         id_trait_df = pd.DataFrame({
             'EnsemblId': df['EnsemblId'],
