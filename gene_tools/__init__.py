@@ -5,8 +5,9 @@ from . import preproc
 from . import vizu
 
 #Puts the emphasis on most relevant functions
-from .preproc import cleanDic, NaCount
+from .preproc import cleanDic
 from .scoring import compute_scores
+from .analysis import NaCount
 
 #For the autocompletion
 __all__ = ["analysis", "scoring", "preproc", "vizu"]
