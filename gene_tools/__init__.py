@@ -1,13 +1,15 @@
-# propose only relevant files when imported
-from . import analysis
-from . import scoring
 from . import preproc
-from . import vizu
+from . import scoring
 
-#Puts the emphasis on most relevant functions
-from .preproc import cleanDic
-from .scoring import compute_scores
-from .analysis import NaCount
+from .preproc import foldersLoad, cleanDic
+from .scoring import compute_scores, geneScores, NA_filtering
 
-#For the autocompletion
-__all__ = ["analysis", "scoring", "preproc", "vizu"]
+__all__ = [
+    "foldersLoad",
+    "cleanDic",
+    "compute_scores",
+    "geneScores",
+    "NA_filtering",
+    "preproc",
+    "scoring"
+]
