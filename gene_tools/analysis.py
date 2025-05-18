@@ -24,13 +24,14 @@ def NaCount(dataframe, show=False):
     all_score_nan = dataframe[score_cols].isna().all(axis=1).sum()
 
     if show:
-        print("Trait NaNs:", traitsNa)
+        print("Traits NaNs:", traitsNa)
         print("EnsemblId NaNs:", ensemblNa)
         print("Total rows:", lendf)
         print("NaNs per score column:")
         print(colsNan)
         print("Rows with all score columns as NaN:", all_score_nan)
 
+    #J'aime beaucoup les conditions!
     return {
         "Trait_NaNs": traitsNa,
         "EnsemblId_NaNs": ensemblNa,
@@ -39,3 +40,6 @@ def NaCount(dataframe, show=False):
         "NaNs_per_score_column": colsNan.to_dict(),
         "Rows_with_all_score_NaNs": all_score_nan
     }
+
+
+### Ceci est un test, j'espère que ça va pas tout casser
