@@ -1,0 +1,71 @@
+Quick GitHub + VSCode Setup Guide
+=================================
+
+Objective:
+----------
+Enable collaborative development using GitHub and VSCode on Windows or macOS, with minimal setup and clear version control practices.
+
+1. Tools to Install:
+--------------------
+- GitHub Desktop: https://desktop.github.com/
+- Visual Studio Code: https://code.visualstudio.com/
+- Git: https://git-scm.com/downloads
+
+2. Cloning the Repository:
+--------------------------
+1. Open GitHub Desktop
+2. Select "Clone a repository"
+3. Enter the repository URL or select from the list
+4. Choose a local folder to clone the project
+5. Click "Open in Visual Studio Code"
+
+3. Git Basics:
+--------------
+- Git is a version control system for tracking code changes
+- GitHub is a remote host for sharing and collaborating on Git repositories
+- A branch is a separate working version of the project; commonly used for feature development
+- The `.gitignore` file lists files and folders that should not be tracked (e.g., environment files, data folders)
+
+4. Common Workflow:
+-------------------
+1. Modify code in VSCode
+2. Stage changes: `git add .` (or use GitHub Desktop)
+3. Commit changes: `git commit -m "descriptive message"`
+4. Push to GitHub: `git push` (or click "Push origin" in GitHub Desktop)
+5. Pull latest changes: `git pull` (or click "Pull" in GitHub Desktop)
+6. Submit a Pull Request (PR) to merge your branch into `main`
+
+5. Switching Branches:
+----------------------
+Use GitHub Desktop or:
+    git checkout branch_name
+
+To create and switch to a new branch:
+    git checkout -b new_branch_name
+
+6. Restoring or Discarding Changes:
+-----------------------------------
+To discard all uncommitted changes:
+    git restore .
+To remove untracked files and folders:
+    git clean -fd
+
+7. .gitignore Recommendations:
+------------------------------
+Typical files/folders to exclude:
+
+    .venv/
+    __pycache__/
+    data/
+    *.ipynb_checkpoints/
+    .vscode/
+    *.code-workspace
+
+These ensure temporary, system-specific, or large files are not pushed to the repository.
+
+8. General Advice:
+------------------
+- Always pull the latest version before making changes
+- Use clear commit messages
+- Push frequently to avoid losing work
+- Use branches for isolated development
