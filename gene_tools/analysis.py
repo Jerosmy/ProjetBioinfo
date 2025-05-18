@@ -1,5 +1,11 @@
 
-def NaCount(dataframe, show=False):
+def fun(a, b):
+    for i in range(a):
+        print(f'{i}+{b} = {i*b}')
+
+
+
+def NaCount(dataframe, show=False, test = False):
     """
     Inspect the presence of NaN values in a gene scoring dataframe.
 
@@ -17,6 +23,10 @@ def NaCount(dataframe, show=False):
     # Find score columns
     score_cols = [col for col in dataframe.columns if col.endswith('_percentile')]
     
+    #Add a new subfunction !!
+    if test :
+        fun(4, 8)
+        
     # NaN count per score column
     colsNan = dataframe[score_cols].isna().sum()
 
