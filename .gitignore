@@ -31,3 +31,7 @@ Desktop.ini
 
 #Data
 data
+
+#Local test folders
+Test.ipynb
+trashtest.ipynb
