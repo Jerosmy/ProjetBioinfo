@@ -25,7 +25,7 @@ def foldersLoad(root_path, folders):
 
 
 
-def clean_trait_data(trait_data, trait_name):
+def cleanDic(trait_data, trait_name):
     """
     Clean and merge dataframes related to a specific trait.
 

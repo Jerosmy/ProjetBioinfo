@@ -1,5 +1,5 @@
 import pandas as pd
-from .preproc import clean_trait_data 
+from .preproc import cleanDic
 
 def compute_scores(df):
     """
