@@ -25,41 +25,50 @@ def foldersLoad(root_path, folders):
 
 
 
-def cleanDic(trait_data, trait_name):
+def cleanDic(raw_dict, method_names):
     """
-    Clean and merge dataframes related to a specific trait.
-
+    Aggregates multiple method-specific dataframes into a single dataframe per trait.
+    
     Args:
-        trait_data (list): List of dataframes for the same trait.
-        trait_name (str): Name of the trait.
+        raw_dict (dict): Dictionary where each key is a trait and the value is a list of dataframes
+                         (one for each method: e.g., GWAS, eQTL, etc.).
+        method_names (list of str): List of method names in the same order as the dataframes in the list.
 
     Returns:
-        pd.DataFrame: Merged and cleaned dataframe with scores and ranks.
+        dict: A dictionary {trait: merged dataframe} where each dataframe contains:
+              - EnsemblId
+              - Trait
+              - One p-value column per method (e.g., "GWAS_pvalue")
+              - One beta column per method (e.g., "eQTL_b"), if available
     """
-    cleaned_dict = {}
+    result = {}
 
-    for df in trait_data:
-        method_name = df['Method'][0].split('-')[0]
-        main_data = {
-            'EnsemblId': df['EnsemblId'],
-            f'{method_name}_p_value': df['p_value']
-        }
+    for trait, df_list in raw_dict.items():
+        method_dfs = []
+        for df, method in zip(df_list, method_names):
+            df_temp = df.copy()
 
-        if 'b_ivw' in df.columns:
-            main_data[f'{method_name}_b_ivw'] = df['b_ivw']
+            # Rename columns first
+            rename_dict = {}
+            if "p_value" in df_temp.columns:
+                rename_dict["p_value"] = f"{method}_pvalue"
+            if "b_ivw" in df_temp.columns:
+                rename_dict["b_ivw"] = f"{method}_b"
+            df_temp = df_temp.rename(columns=rename_dict)
 
-        id_trait_df = pd.DataFrame({
-            'EnsemblId': df['EnsemblId'],
-            'Trait': trait_name
-        })
-        method_df = pd.DataFrame(main_data)
+            # Keep only relevant columns
+            cols_to_keep = ["EnsemblId"] + list(rename_dict.values())
+            df_temp = df_temp[cols_to_keep]
 
-        cleaned_dict[df['Method'][0]] = [method_df, id_trait_df]
+            method_dfs.append(df_temp)
 
-    keys = list(cleaned_dict.keys())
-    merged_df = pd.merge(cleaned_dict[keys[0]][1], cleaned_dict[keys[0]][0])
+        # Merge all method-specific dataframes on EnsemblId
+        merged_df = method_dfs[0]
+        for next_df in method_dfs[1:]:
+            merged_df = pd.merge(merged_df, next_df, on="EnsemblId", how="outer")
 
-    for key in keys[1:]:
-        merged_df = pd.merge(merged_df, cleaned_dict[key][0], how='outer', on='EnsemblId')
+        # Add the Trait column
+        merged_df.insert(1, "Trait", trait)
+        result[trait] = merged_df
 
-    return merged_df
+    return result
