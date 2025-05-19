@@ -48,13 +48,34 @@ def cleanDic(raw_dict, method_names = ['eQTL', 'Exome', 'GWAS', 'pQTL']):
         method_dfs = []
         for df, method in zip(df_list, method_names):
             df_temp = df.copy()
+            
 
-            # Rename columns first
-            rename_dict = {}
-            if "p_value" in df_temp.columns:
-                rename_dict["p_value"] = f"{method}_pvalue"
+            #compute ranks
+
+            beta = False
+            threshold = 0.05 / len(df_temp)
+
             if "b_ivw" in df_temp.columns:
-                rename_dict["b_ivw"] = f"{method}_b"
+                beta = True
+                my_betas = df_temp["p_value"] <= threshold
+                my_pvals = df_temp["p_value"] > threshold
+
+                ranking_betas = df_temp.loc[my_betas,"b_ivw"].abs().rank(method="min",ascending=False)
+                ranking_pvalues = df_temp.loc[my_pvals,"p_value"].rank(method="min",ascending=True)
+                ranking_pvalues +=len(ranking_betas)
+                bothranks =pd.concat([ranking_betas,ranking_pvalues])
+                df_temp["Score"] =bothranks.sort_index() / len(df_temp)
+            else :
+                df_temp["Score"] = df_temp['p_value']
+            
+            df_temp['Rank'] = df_temp['Score'].rank()
+            df_temp['Percentile'] = (df_temp['Rank'] / len(df_temp)) * 100
+
+            
+            # Rename columns
+            rename_dict = {}
+            rename_dict['Percentile'] = f"{method}_percentile"
+
             df_temp = df_temp.rename(columns=rename_dict)
 
             # Keep only relevant columns
