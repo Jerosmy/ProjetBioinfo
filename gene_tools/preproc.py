@@ -25,14 +25,15 @@ def foldersLoad(root_path, folders):
 
 
 
-def cleanDic(raw_dict, method_names):
+def cleanDic(raw_dict, method_names = ['eQTL', 'Exome', 'GWAS', 'pQTL']):
     """
     Aggregates multiple method-specific dataframes into a single dataframe per trait.
     
     Args:
         raw_dict (dict): Dictionary where each key is a trait and the value is a list of dataframes
                          (one for each method: e.g., GWAS, eQTL, etc.).
-        method_names (list of str): List of method names in the same order as the dataframes in the list.
+        method_names (list of str): List of method names in the same order as the dataframes in the list. 
+                        Default is ['eQTL', 'Exome', 'GWAS', 'pQTL']
 
     Returns:
         dict: A dictionary {trait: merged dataframe} where each dataframe contains:
