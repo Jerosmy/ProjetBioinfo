@@ -39,7 +39,7 @@ def Median(df):
     return df
 
 
-def PCA(df):
+def pca(df):
 
     percentile_cols = [col for col in df.columns if "_" in col and col.split("_")[1] == "percentile"]
 
