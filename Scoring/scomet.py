@@ -39,20 +39,21 @@ def Median(df):
     return df
 
 
-def PCA(df):
+def PCA_score(df):
+    from sklearn.decomposition import PCA
+    from sklearn.preprocessing import StandardScaler
 
     percentile_cols = [col for col in df.columns if "_" in col and col.split("_")[1] == "percentile"]
-
     filtered = df[percentile_cols].dropna()
 
-    scaletool = StandardScaler()
+    scaler = StandardScaler()
+    scaled_filtered = scaler.fit_transform(filtered)
 
-    scaled_filtered = scaletool.fit_transform(filtered)
-
-    pca = PCA(n_components = 2)
-
+    pca = PCA(n_components=2)
     df_pca = pca.fit_transform(scaled_filtered)
 
-    filtered["Prioscore_PCA"] = df_pca[:,0]
+    filtered["PCA"] = df_pca[:, 0]
 
-    return filtered
+    df.loc[filtered.index, "PCA"] = filtered["PCA"]
+    return df, print(pca)
+    
