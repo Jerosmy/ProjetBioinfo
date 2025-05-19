@@ -51,6 +51,5 @@ def pca(df):
 
     filtered["PCA"] = df_pca[:, 0]
 
-    df.loc[filtered.index, "PCA"] = filtered["PCA"]
-    return df, print(pca)
+    return filtered
     
