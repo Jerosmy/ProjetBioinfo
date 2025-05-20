@@ -39,3 +39,28 @@ def NaCount(dataframe, show=False):
         "NaNs_per_score_column": colsNan.to_dict(),
         "Rows_with_all_score_NaNs": all_score_nan
     }
+
+
+from Scoring.scomet import Mean, Max, Min, Median, pca
+
+Max(ldl_clean["LDL"])
+Mean(ldl_clean["LDL"])
+Median(ldl_clean["LDL"])
+Min(ldl_clean["LDL"])
+
+
+    
+
+drug_targets = set(df.loc[df["Sum"] >= 3, "EnsemblId"])
+score_cols = ["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median"]
+
+for col in score_cols:
+    top = ldl_clean["LDL"].sort_values(by=col, ascending=True).head(int(0.01 * len(ldl_clean["LDL"])))
+    top_ids = set(top["EnsemblId"])
+    overlap = top_ids & drug_targets
+    percent = 100 * len(overlap) / len(top_ids)
+    print(f"{col}: {percent:.2f}% of top 1% are drug targets")
+
+
+
+
