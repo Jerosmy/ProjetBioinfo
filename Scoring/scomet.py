@@ -46,10 +46,14 @@ def pca(df):
     scaler = StandardScaler()
     scaled_filtered = scaler.fit_transform(filtered)
 
-    pca = PCA(n_components=2)
-    df_pca = pca.fit_transform(scaled_filtered)
+    pca_model = PCA(n_components=2)
+    df_pca = pca_model.fit_transform(scaled_filtered)
 
-    filtered["PCA"] = df_pca[:, 0]
+    # Create a Series with PCA scores indexed like `filtered`
+    pca_scores = pd.Series(df_pca[:, 0], index=filtered.index, name="PCA")
 
-    return filtered
-    
+    # Copy original df and add PCA column where possible
+    df_with_pca = df.copy()
+    df_with_pca.loc[pca_scores.index, "PCA"] = pca_scores
+
+    return df_with_pca

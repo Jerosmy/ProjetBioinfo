@@ -62,5 +62,42 @@ for col in score_cols:
     print(f"{col}: {percent:.2f}% of top 1% are drug targets")
 
 
+from scipy.stats import fisher_exact
+
+def evaluate_prioritization(reference, tocompare, score_cols=None, sum_threshold=3, top_percent=0.01):
+    """
+    Compute odds ratios and Fisher's exact test p-values for enrichment of drug targets
+    among top-ranked genes based on given prioritization scores.
+
+    Parameters:
+        reference (pd.DataFrame): DataFrame containing 'Sum' and 'EnsemblId' columns used to define drug targets.
+        ldl_clean (pd.DataFrame): DataFrame containing the same 'EnsemblId' and prioritization score columns.
+        score_cols (list, optional): Columns to evaluate (default: mean, max, min, median prioritizations).
+        sum_threshold (int, optional): Minimum 'Sum' to define drug targets.
+        top_percent (float, optional): Fraction of top genes to consider (e.g., 0.01 for top 1%).
+
+    Returns:
+        None (prints OR, p-value, and count of overlapping drug targets).
+    """
+    if score_cols is None:
+        score_cols = ["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median"]
+
+    drug_targets = set(reference.loc[df["Sum"] >= sum_threshold, "EnsemblId"])
+    all_ids = set(ldl_clean["EnsemblId"])
+
+    for col in score_cols:
+        ranked = ldl_clean.sort_values(by=col, ascending=True)
+        top = ranked.head(int(top_percent * len(ldl_clean)))
+        top_ids = set(top["EnsemblId"])
+        rest_ids = all_ids - top_ids
+
+        A = len(top_ids & drug_targets)
+        B = len(top_ids - drug_targets)
+        C = len(rest_ids & drug_targets)
+        D = len(rest_ids - drug_targets)
+
+        oddsratio, p_value = fisher_exact([[A, B], [C, D]])
+
+        print(f"{col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in top {int(top_percent * 100)}% = {A}")
 
 
