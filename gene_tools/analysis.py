@@ -80,6 +80,7 @@ def evaluate_prioritization(reference, mydf, score_cols = ["Prioscore_mean", "Pr
 
         oddsratio, p_value = fisher_exact([[A, B], [C, D]])
 
-        print(f"{col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in top {int(top_percent * 100)}% = {A}")
+        print(f"{col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in top {float(top_percent * 100)}% = {A}")
+        
 
 
