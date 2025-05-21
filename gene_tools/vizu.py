@@ -133,7 +133,7 @@ def compare_drug_target_percentiles(
     prio_vals = df_t[prio_col]
 
     # 4) One‐sided t-test: H1 = Prioscore_min < GWAS
-    t_stat, p_val = ttest_ind(prio_vals, ref_vals, alternative="less")
+    t_stat, p_val = ttest_ind(prio_vals, ref_vals, alternative="less",nan_policy="omit")
 
     # 5) Build the boxplot
     plot_df = pd.DataFrame({
