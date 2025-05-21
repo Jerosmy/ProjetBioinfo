@@ -46,6 +46,7 @@ def NaCount(dataframe, show=False):
 
 
 
+from scipy.stats import fisher_exact
 
 def evaluate_OR(
     reference,
@@ -60,41 +61,37 @@ def evaluate_OR(
     Compute odds ratios and Fisher's exact test p-values for enrichment of drug targets
     among top-ranked genes based on prioritization scores.
 
-    Parameters:
-        reference (pd.DataFrame): Drug target info with 'Sum' and 'EnsemblId'.
-        mydf (pd.DataFrame): Trait-specific DataFrame (must contain 'Trait').
-        score_cols (list): Score columns to evaluate.
-        sum_threshold (int): Minimum 'Sum' to define drug targets.
-        cutoff (float): Top X% or percentile threshold.
-        method (str): "topvalues" or "lessthan".
-        printer (bool): Whether to print results.
-
-    Returns:
-        dict: {trait: {score_col: [OR, p-value, drug target count in top]}}
+    Now auto-filters `reference` to the trait in `mydf`.
     """
-    # Extract trait name
+    # Extract trait name (must be exactly one)
     trait_col_values = mydf["Trait"].dropna().unique()
     if len(trait_col_values) != 1:
         raise ValueError(f"Expected exactly one unique 'Trait' in df, found: {trait_col_values}")
     trait_name = trait_col_values[0]
 
-    results = {}
-    drug_targets = set(reference.loc[reference["Sum"] >= sum_threshold, "EnsemblId"])
-    all_ids = set(mydf["EnsemblId"])
+    # *** NEW: filter reference to this trait ***
+    if "Trait" in reference.columns:
+        reference = reference[reference["Trait"] == trait_name]
 
+    # Build set of true drug targets for this trait
+    drug_targets = set(reference.loc[reference["Sum"] >= sum_threshold, "EnsemblId"])
+    all_ids      = set(mydf["EnsemblId"])
+
+    # Prepare results container
+    results = {}
     trait_result = {}
 
     for col in score_cols:
         if method == "topvalues":
             subset = mydf.sort_values(by=col, ascending=True).head(int(cutoff * len(mydf)))
-            desc = f"top {int(cutoff * 100)}%"
+            desc   = f"top {cutoff * 100:.1f}%"
         elif method == "lessthan":
             subset = mydf[mydf[col] < cutoff * 100]
-            desc = f"score < {cutoff * 100}"
+            desc   = f"score < {cutoff * 100}"
         else:
             raise ValueError("Invalid method: choose 'topvalues' or 'lessthan'")
 
-        top_ids = set(subset["EnsemblId"])
+        top_ids  = set(subset["EnsemblId"])
         rest_ids = all_ids - top_ids
 
         A = len(top_ids & drug_targets)
@@ -107,8 +104,7 @@ def evaluate_OR(
         if printer:
             print(f"[{trait_name}] {col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in {desc} = {A}")
 
-        trait_result[col] = [round(oddsratio,3), round(p_value,3), round(A,3)] # type: ignore
-
+        trait_result[col] = [round(oddsratio, 3), round(p_value, 3), A]
 
     results[trait_name] = trait_result
     return results
