@@ -111,3 +111,4 @@ def cleanDic(raw_dict, method_names = ['eQTL', 'Exome', 'GWAS', 'pQTL'], output 
         result[trait] = merged_df
 
     return result
+

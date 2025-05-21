@@ -53,7 +53,7 @@ def NA_filtering(df, max_na=0):
         pd.DataFrame: Filtered dataframe.
     """
 
-    return df[df["NA_Count"] <= max_na].copy()
+    return df[df.isna().sum(axis=1) <= 0]
 
 
 
