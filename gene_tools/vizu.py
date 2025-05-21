@@ -129,8 +129,12 @@ def compare_drug_target_percentiles(
         if col not in df_t.columns:
             raise KeyError(f"Column {col!r} not in df for trait {trait}")
 
-    ref_vals  = df_t[ref_col].dropna()
-    prio_vals = df_t[prio_col].dropna()
+# this keeps only rows where *both* values are present
+    df_clean = df_t[[ref_col, prio_col]].dropna()
+
+
+    ref_vals  = df_clean[ref_col]
+    prio_vals = df_clean[prio_col]
     
 
     # 4) One‐sided t-test: H1 = Prioscore_min < GWAS
