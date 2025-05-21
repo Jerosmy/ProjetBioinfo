@@ -46,7 +46,6 @@ def NaCount(dataframe, show=False):
 
 
 
-
 def evaluate_OR(
     reference,
     mydf,
@@ -56,27 +55,15 @@ def evaluate_OR(
     method="topvalues",  # or 'lessthan'
     printer=True
 ):
-    """
-    Compute odds ratios and Fisher's exact test p-values for enrichment of drug targets
-    among top-ranked genes based on prioritization scores.
-
-    Parameters:
-        reference (pd.DataFrame): Drug target info with 'Sum' and 'EnsemblId'.
-        mydf (pd.DataFrame): Trait-specific DataFrame (must contain 'Trait').
-        score_cols (list): Score columns to evaluate.
-        sum_threshold (int): Minimum 'Sum' to define drug targets.
-        cutoff (float): Top X% or percentile threshold.
-        method (str): "topvalues" or "lessthan".
-        printer (bool): Whether to print results.
-
-    Returns:
-        dict: {trait: {score_col: [OR, p-value, drug target count in top]}}
-    """
-    # Extract trait name
     trait_col_values = mydf["Trait"].dropna().unique()
     if len(trait_col_values) != 1:
         raise ValueError(f"Expected exactly one unique 'Trait' in df, found: {trait_col_values}")
     trait_name = trait_col_values[0]
+
+    # Filter to shared genes only
+    valid_ids = set(mydf["EnsemblId"]) & set(reference["EnsemblId"])
+    mydf = mydf[mydf["EnsemblId"].isin(valid_ids)]
+    reference = reference[reference["EnsemblId"].isin(valid_ids)]
 
     results = {}
     drug_targets = set(reference.loc[reference["Sum"] >= sum_threshold, "EnsemblId"])
@@ -107,8 +94,7 @@ def evaluate_OR(
         if printer:
             print(f"[{trait_name}] {col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in {desc} = {A}")
 
-        trait_result[col] = [round(oddsratio,3), round(p_value,3), round(A,3)] # type: ignore
-
+        trait_result[col] = [round(oddsratio, 3), round(p_value, 3), round(A, 3)]
 
     results[trait_name] = trait_result
     return results
@@ -116,7 +102,6 @@ def evaluate_OR(
 
 
 
-        
 def evaluate_trait_scores(
     df,
     drug_reference,
@@ -126,24 +111,19 @@ def evaluate_trait_scores(
     printer=True,
     targetthreshold=3
 ):
-    """
-    Evaluate score overlaps with drug targets for a single trait.
-
-    Returns:
-    - dict: {trait: {score_column: float (percent overlap)}}
-    """
     trait_col_values = df["Trait"].dropna().unique()
     if len(trait_col_values) != 1:
         raise ValueError(f"Expected exactly one unique 'Trait' in df, found: {trait_col_values}")
     trait_name = trait_col_values[0]
 
-    results = {}
+    # Filter to shared genes only
+    drug_reference = drug_reference[drug_reference["trait"] == trait_name]
+    valid_ids = set(df["EnsemblId"]) & set(drug_reference["EnsemblId"])
+    df = df[df["EnsemblId"].isin(valid_ids)]
+    drug_reference = drug_reference[drug_reference["EnsemblId"].isin(valid_ids)]
 
-    drug_targets = set(
-        drug_reference[
-            (drug_reference["trait"] == trait_name) & (drug_reference["Sum"] >= targetthreshold)
-        ]["EnsemblId"]
-    )
+    results = {}
+    drug_targets = set(drug_reference[drug_reference["Sum"] >= targetthreshold]["EnsemblId"])
 
     n = len(df)
     trait_result = {}
@@ -160,7 +140,7 @@ def evaluate_trait_scores(
         overlap = top_ids & drug_targets
         percent = 100 * len(overlap) / len(top_ids) if top_ids else 0.0
 
-        trait_result[col] = round(percent,3)
+        trait_result[col] = round(percent, 3)
 
         if printer:
             print(f"[{trait_name}] {col}: {percent:.2f}% overlap")
@@ -226,3 +206,5 @@ def run_full_trait_pipeline(
         }
 
     return results
+
+
