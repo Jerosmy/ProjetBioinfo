@@ -95,5 +95,3 @@ def cleanDic(raw_dict, method_names = ['eQTL', 'Exome', 'GWAS', 'pQTL']):
 
     return result
 
-def gettargets(folder,threshold) : 
-
