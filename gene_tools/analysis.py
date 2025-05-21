@@ -15,7 +15,7 @@ def NaCount(dataframe, show=False):
     lendf = len(dataframe)
 
     # Find score columns
-    score_cols = [col for col in dataframe.columns if col.endswith('_percentile')]
+    score_cols = [col for col in dataframe.columns if (col.endswith('_percentile') or col.endswith('_pvalue') or col.endswith('_b'))]
     
     # NaN count per score column
     colsNan = dataframe[score_cols].isna().sum()
