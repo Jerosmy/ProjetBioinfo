@@ -44,6 +44,7 @@ def NaCount(dataframe, show=False):
 
 
 from scipy.stats import fisher_exact
+import pandas as pd
 
 def evaluate_OR(reference, mydf, score_cols = ["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median"]
 , sum_threshold=3, top_percent=0.01):
@@ -82,46 +83,68 @@ def evaluate_OR(reference, mydf, score_cols = ["Prioscore_mean", "Prioscore_max"
 
         print(f"{col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in top {float(top_percent * 100)}% = {A}")
         
-def evaluate_score_overlap(
-    df,
-    score_cols,
-    drug_targets,
-    method="topvalues",
-    threshold=0.01,
-    verbose=True
+def evaluate_trait_scores(
+    trait_data: dict,
+    drug_reference: pd.DataFrame,
+    score_columns=["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median", "Prioscore_product"],
+    overlap_method="topvalues",
+    cutoff=0.01,
+    printer=True,
+    targetthreshold = 3
 ):
     """
-    Evaluate overlap between top-scored genes and known drug targets.
+    Evaluate score overlaps with drug targets across multiple traits.
 
     Parameters:
-    - df (pd.DataFrame): The trait-specific DataFrame.
-    - score_cols (list): List of score column names to evaluate.
-    - drug_targets (set): Set of known drug target Ensembl IDs for the trait.
-    - method (str): "topvalues" for top X%, "lessthan" for values below threshold.
-    - threshold (float): Top X percent or value cutoff.
-    - verbose (bool): Print results if True.
+    - trait_data (dict): {trait: DataFrame} from dic_clean.
+    - drug_reference (pd.DataFrame): DataFrame with 'trait', 'Sum', and 'EnsemblId' columns.
+    - score_columns (list): List of score column names to evaluate.
+    - overlap_method (str): "topvalues" or "lessthan".
+    - cutoff (float): Percentile or value cutoff.
+    - verbose (bool): Whether to print each result.
 
     Returns:
-    - dict: A dictionary {score_col: overlap_percent}
+    - dict: {
+        trait1: {
+            score1: "X.XX% of [top X% / score < Y] are drug targets",
+            ...
+        },
+        ...
+    }
     """
     results = {}
-    n = len(df)
 
-    for col in score_cols:
-        if method == "topvalues":
-            subset = df.sort_values(by=col, ascending=True).head(int(threshold * n))
-        elif method == "lessthan":
-            subset = df[df[col] < threshold]
-        else:
-            raise ValueError("Invalid method: choose 'topvalues' or 'lessthan'")
+    for trait, df in trait_data.items():
+        drug_targets = set(
+            drug_reference[
+                (drug_reference["trait"] == trait) & (drug_reference["Sum"] >= targetthreshold)
+            ]["EnsemblId"]
+        )
 
-        top_ids = set(subset["EnsemblId"])
-        overlap = top_ids & drug_targets
-        percent = 100 * len(overlap) / len(top_ids) if top_ids else 0.0
-        results[col] = percent
+        n = len(df)
+        trait_result = {}
 
-        if verbose:
-            print(f"{col}: {percent:.2f}% of top genes are drug targets")
+        for col in score_columns:
+            if overlap_method == "topvalues":
+                subset = df.sort_values(by=col, ascending=True).head(int(cutoff * n))
+                desc = f"top {int(cutoff * 100)}%"
+            elif overlap_method == "lessthan":
+                subset = df[df[col] < cutoff*100]
+                desc = f"score < {cutoff}"
+            else:
+                raise ValueError("Invalid overlap_method: choose 'topvalues' or 'lessthan'")
+
+            top_ids = set(subset["EnsemblId"])
+            overlap = top_ids & drug_targets
+            percent = 100 * len(overlap) / len(top_ids) if top_ids else 0.0
+
+            message = f"{percent:.2f}% of {desc} are drug targets"
+            trait_result[col] = message
+
+            if printer:
+                print(f"[{trait}] {col}: {message}")
+
+        results[trait] = trait_result
 
     return results
 
