@@ -108,7 +108,8 @@ def evaluate_OR(
         if printer:
             print(f"[{trait_name}] {col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in {desc} = {A}")
 
-        trait_result[col] = [oddsratio, p_value, A]
+        trait_result[col] = [round(oddsratio,3), round(p_value,3), round(A,3)]
+
 
     results[trait_name] = trait_result
     return results
