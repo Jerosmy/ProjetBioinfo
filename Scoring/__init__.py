@@ -1,7 +1,7 @@
 from . import scomet
 
 
-from .scomet import Mean,Max,Min,Median,pca, prioscore_product
+from .scomet import Mean,Max,Min,Median,pca, Product
 
 
 __all__ = [
@@ -10,5 +10,5 @@ __all__ = [
     "Max",
     "Min",
     "Median",
-    "prioscore_product"
+    "Product"
 ]
