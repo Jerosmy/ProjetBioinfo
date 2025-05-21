@@ -6,20 +6,22 @@ import pandas as pd
 def foldersLoad(root_path, folders):
     """
     Load tab-separated data files from multiple subfolders into a dictionary.
-    Skips files that cannot be read.
+
+    Args:
+        root_path (str): Root directory containing the subfolders.
+        folders (list): List of subfolder names to load data from.
+
+    Returns:
+        dict: Dictionary mapping trait names to lists of dataframes.
     """
     all_data = defaultdict(list)
     for folder in folders:
         folder_path = os.path.join(root_path, folder)
         for file_name in os.listdir(folder_path):
+            trait = file_name.split('_')[0]
             file_path = os.path.join(folder_path, file_name)
-            print(f"📄 Attempting to load: {file_path}")
-            try:
-                df = pd.read_csv(file_path, sep='\t')
-                trait = file_name.split('_')[0]
-                all_data[trait].append(df)
-            except Exception as e:
-                print(f"❌ Failed to load {file_path}: {e}")
+            df = pd.read_csv(file_path, sep='\t')
+            all_data[trait].append(df)
     return all_data
 
 
