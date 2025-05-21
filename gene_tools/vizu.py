@@ -156,3 +156,140 @@ def compare_drug_target_percentiles(
     plt.show()
 
     return t_stat, p_val
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from gene_tools.analysis import evaluate_OR, evaluate_trait_scores, run_full_trait_pipeline
+from Scoring.scomet import Mean, Max, Min, Median, Product
+
+def plot_baseline_vs_prioscore(
+    dic_clean,
+    merged,
+    paper_cutoff=0.05,
+    our_cutoff=0.01,
+    targetthreshold=3,
+    figsize=(10,14),
+    palette="tab10"
+):
+    """
+    For each trait in dic_clean:
+      • Load the paper’s best method & OR at paper_cutoff (hard-coded table).
+      • Run your Prioscore pipeline at our_cutoff to get ORs for Mean/Max/Min/Median/Product.
+      • Pick your top 3 Prioscore methods.
+      • Plot a grouped horizontal bar chart: Baseline vs your top-3 for every trait.
+
+    Parameters
+    ----------
+    dic_clean : dict
+        trait → trait-specific DataFrame (must contain “Trait” & EnsemblId).
+    merged : pd.DataFrame
+        full drug reference (must contain “Trait”/“trait”, “Sum”, “EnsemblId”).
+    paper_cutoff : float, default 0.05
+        cutoff used in the paper for baseline ORs.
+    our_cutoff : float, default 0.01
+        cutoff you use for your Prioscore methods.
+    targetthreshold : int, default 3
+        minimum Sum to label a row as a drug target.
+    figsize : tuple, default (10,14)
+        figure size for the plot.
+    palette : str or list, default "tab10"
+        seaborn color palette.
+    """
+    # 1) paper baseline dict (at paper_cutoff)
+    baseline_or = {
+        "LDL":                  ["eQTL-GWAS",   7.5],
+        "total_cholesterol":    ["Exome-GWAS",  8.0],
+        "T2D":                  ["GWAS",        4.0],
+        "T1D":                  ["Exome-GWAS",  3.0],
+        "CKD":                  ["GWAS",        5.0],
+        "Endometriosis":        ["Exome-GWAS",  1.0],
+        "VTE":                  ["GWAS",        4.0],
+        "CAD":                  ["GWAS",        4.0],
+        "Systolic_BP":          ["eQTL-GWAS",   5.0],
+        "Diastolic_BP":         ["GWAS",        3.5],
+        "Atrial_fibrillation":  ["GWAS",        3.0],
+        "Stroke":               ["Exome-GWAS",  3.0],
+        "Rheumatoid_arthritis": ["eQTL-GWAS",   4.0],
+        "Osteoporosis":         ["eQTL-GWAS",   3.5],
+        "Osteoarthritis":       ["eQTL-GWAS",   1.5],
+        "Atopic_dermatitis":    ["GWAS",        3.75],
+        "Psoriasis":            ["eQTL-GWAS",   2.5],
+        "IBD":                  ["GWAS",        4.0],
+        "IBS":                  ["pQTL-GWAS",   8.0],
+        "Asthma":               ["GWAS",        4.0],
+        "COPD":                 ["eQTL-GWAS",   2.0],
+        "Pneumonia":            ["eQTL-GWAS",   6.0],
+        "Multiple_sclerosis":   ["eQTL-GWAS",   3.75],
+        "Epilepsy":             ["eQTL-GWAS",   3.0],
+        "Parkinsons_disease":   ["eQTL-GWAS",   3.0],
+        "Alzheimer":            ["eQTL-GWAS",   2.0],
+        "Schizophrenia":        ["GWAS",        3.0],
+        "MDD":                  ["Exome-GWAS",  3.0],
+        "Bipolar":              ["GWAS",        1.0],
+        "Glaucoma":             ["Exome-GWAS",  2.0],
+    }
+
+    # 2) run your pipeline at our_cutoff
+    finaldic = run_full_trait_pipeline(
+        dic_clean,
+        drug_reference=merged,
+        scoring_functions=[Mean, Max, Min, Median, Product],
+        evaluate_or_fn=evaluate_OR,
+        evaluate_score_fn=evaluate_trait_scores,
+        score_kwargs={"cutoff": our_cutoff, "overlap_method": "topvalues"},
+        or_kwargs={
+            "score_cols": [
+                "Prioscore_mean", "Prioscore_max",
+                "Prioscore_min", "Prioscore_median",
+                "Prioscore_product"
+            ],
+            "method": "topvalues",
+            "cutoff": our_cutoff
+        },
+        verbose=False
+    )
+
+    # 3) assemble plotting DataFrame
+    rows = []
+    for trait, info in finaldic.items():
+        # your top-3 Prioscore methods
+        our_items = info["OR_eval"].items()
+        top3 = sorted(our_items, key=lambda kv: kv[1][0], reverse=True)[:3]
+        for method_col, (orval, pval, n) in top3:
+            rows.append({
+                "Trait": trait,
+                "Method": method_col.replace("Prioscore_",""),
+                "OR": orval,
+                "Source": f"Ours ({int(our_cutoff*100)}%)"
+            })
+        # add paper baseline
+        bm, bo = baseline_or[trait]
+        rows.append({
+            "Trait": trait,
+            "Method": bm,
+            "OR": bo,
+            "Source": f"Baseline ({int(paper_cutoff*100)}%)"
+        })
+
+    df_plot = pd.DataFrame(rows)
+
+    # 4) plot
+    plt.figure(figsize=figsize)
+    sns.set_style("whitegrid")
+    ax = sns.barplot(
+        data=df_plot,
+        y="Trait",
+        x="OR",
+        hue="Method",
+        dodge=True,
+        order=list(baseline_or.keys()),
+        palette=palette
+    )
+    ax.axvline(1, ls="--", color="gray")
+    ax.set_title(f"Baseline {paper_cutoff*100:.0f}% vs. Top‐3 Prioscore ({our_cutoff*100:.0f}%)")
+    ax.set_xlabel("Odds‐Ratio")
+    ax.set_ylabel("")
+    plt.legend(bbox_to_anchor=(1.02, 1), loc="upper left")
+    plt.tight_layout()
+    plt.show()
