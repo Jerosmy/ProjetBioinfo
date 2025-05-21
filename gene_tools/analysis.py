@@ -112,11 +112,12 @@ def evaluate_OR(
 
 
 
-        
+
 def evaluate_trait_scores(
     df,
     drug_reference,
-    score_columns=["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median", "Prioscore_product"],
+    scoring_functions=None,
+    score_columns=None,
     overlap_method="topvalues",
     cutoff=0.01,
     printer=True,
@@ -125,30 +126,61 @@ def evaluate_trait_scores(
     """
     Evaluate score overlaps with drug targets for a single trait.
 
+    Parameters:
+        df (pd.DataFrame): Trait-specific DataFrame (must contain exactly one 'Trait').
+        drug_reference (pd.DataFrame): DataFrame with 'trait', 'Sum', and 'EnsemblId'.
+        scoring_functions (list of callables): each fn(df) -> df with new Prioscore_* columns.
+        score_columns (list of str, optional): Which columns to evaluate. 
+            If None, we'll auto-detect any column starting with "Prioscore_".
+        overlap_method (str): "topvalues" or "lessthan".
+        cutoff (float): fraction (for 'topvalues') or percentile (for 'lessthan').
+        printer (bool): whether to print results.
+        targetthreshold (int): minimum Sum to call a row a drug target.
+
     Returns:
-    - dict: {trait: {score_column: float (percent overlap)}}
+        dict: { trait_name: { score_col: percent_overlap } }
     """
-    trait_col_values = df["Trait"].dropna().unique()
-    if len(trait_col_values) != 1:
-        raise ValueError(f"Expected exactly one unique 'Trait' in df, found: {trait_col_values}")
-    trait_name = trait_col_values[0]
+    # 1) Infer trait name
+    trait_vals = df["Trait"].dropna().unique()
+    if len(trait_vals) != 1:
+        raise ValueError(f"Expected exactly one unique 'Trait' in df, found: {trait_vals}")
+    trait_name = trait_vals[0]
 
-    results = {}
+    # 2) Make a working copy & apply scoring functions
+    df_proc = df.copy()
+    if scoring_functions:
+        for fn in scoring_functions:
+            df_proc = fn(df_proc)
 
+    # 3) Decide which columns to evaluate
+    if score_columns is None:
+        # pick up anything starting with "Prioscore_"
+        score_columns = [c for c in df_proc.columns if c.startswith("Prioscore_")]
+    else:
+        # sanity‐check that they exist
+        missing = [c for c in score_columns if c not in df_proc.columns]
+        if missing:
+            raise KeyError(f"Score columns not found: {missing}")
+
+    # 4) Build drug target set for this trait
     drug_targets = set(
-        drug_reference[
-            (drug_reference["trait"] == trait_name) & (drug_reference["Sum"] >= targetthreshold)
-        ]["EnsemblId"]
+        drug_reference.loc[
+            (drug_reference["trait"] == trait_name) &
+            (drug_reference["Sum"] >= targetthreshold),
+            "EnsemblId"
+        ]
     )
 
-    n = len(df)
+    n = len(df_proc)
     trait_result = {}
 
+    # 5) Compute overlap for each score column
     for col in score_columns:
         if overlap_method == "topvalues":
-            subset = df.sort_values(by=col, ascending=True).head(int(cutoff * n))
+            top_n = int(cutoff * n)
+            subset = df_proc.sort_values(by=col, ascending=True).head(top_n)
         elif overlap_method == "lessthan":
-            subset = df[df[col] < cutoff * 100]
+            subset = df_proc[df_proc[col] < cutoff * 100]
         else:
             raise ValueError("Invalid overlap_method: choose 'topvalues' or 'lessthan'")
 
@@ -156,13 +188,11 @@ def evaluate_trait_scores(
         overlap = top_ids & drug_targets
         percent = 100 * len(overlap) / len(top_ids) if top_ids else 0.0
 
-        trait_result[col] = round(percent,3)
-
+        trait_result[col] = round(percent, 3)
         if printer:
             print(f"[{trait_name}] {col}: {percent:.2f}% overlap")
 
-    results[trait_name] = trait_result
-    return results
+    return {trait_name: trait_result}
 
 
 def run_full_trait_pipeline(
