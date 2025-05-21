@@ -13,7 +13,7 @@ def foldersLoad(root_path, folders):
     Returns:
         dict: Dictionary mapping trait names to lists of dataframes.
     """
-    all_data = defaultdict(list)
+    all_data = defaultdict(list) # type: ignore
     for folder in folders:
         folder_path = os.path.join(root_path, folder)
         for file_name in os.listdir(folder_path):
