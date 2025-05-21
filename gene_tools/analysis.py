@@ -19,7 +19,7 @@ def NaCount(dataframe, show=False):
     lendf = len(dataframe)
 
     # Find score columns
-    score_cols = [col for col in dataframe.columns if col.endswith('_percentile')]
+    score_cols = [col for col in dataframe.columns if (col.endswith('_percentile') or col.endswith('_pvalue') or col.endswith('_b'))]
     
     # NaN count per score column
     colsNan = dataframe[score_cols].isna().sum()
@@ -115,6 +115,7 @@ def evaluate_OR(
 
 
 
+
         
 def evaluate_trait_scores(
     df,
@@ -180,6 +181,7 @@ def run_full_trait_pipeline(
 ):
     """
     Run scoring + evaluation across all traits in a dictionary of DataFrames.
+
 
     Args:
     - trait_dict (dict): {trait_name: df}

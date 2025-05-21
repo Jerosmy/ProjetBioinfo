@@ -19,8 +19,8 @@ __all__ = [
     "scoring",
     "analysis",
     "NaCount",
-    "vizu",
-    "evaluate_OR"
+    "vizu"
+    "evaluate_OR",
     "evaluate_trait_scores",
     "run_full_trait_pipeline"
 ]
