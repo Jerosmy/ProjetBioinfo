@@ -84,12 +84,13 @@ def evaluate_OR(reference, mydf, score_cols = ["Prioscore_mean", "Prioscore_max"
         print(f"{col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in top {float(top_percent * 100)}% = {A}")
         
 def evaluate_single_trait_scores(
-    df: pd.DataFrame,
-    drug_reference: pd.DataFrame,
+    df,
+    drug_reference,
     score_columns=["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median", "Prioscore_product"],
     overlap_method="topvalues",
     cutoff=0.01,
     printer=True,
+
     targetthreshold=3
 ):
     """
