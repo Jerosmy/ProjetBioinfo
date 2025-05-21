@@ -104,14 +104,14 @@ def evaluate_OR(
 
         oddsratio, p_value = fisher_exact([[A, B], [C, D]])
 
-        #if printer:
-        #    print(f"[{trait_name}] {col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in {desc} = {A}")
-#
-        #trait_result[col] = [np.round(oddsratio,3).item(), np.round(p_value,3).item(), np.round(A,3)]
+        if printer:
+            print(f"[{trait_name}] {col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in {desc} = {A}")
+
+        trait_result[col] = [round(oddsratio,3), round(p_value,3), round(A,3)] # type: ignore
 
 
-    #results[trait_name] = trait_result
-    return print(type(oddsratio), type(p_value))   #results
+    results[trait_name] = trait_result
+    return results
 
 
 
@@ -204,19 +204,19 @@ def run_full_trait_pipeline(
 
     for trait, df in trait_dict.items():
         df = df.copy()
-
+        curdrugref = drug_reference[drug_reference['trait'] == trait]
         # Apply all scoring functions
         for func in scoring_functions:
             df = func(df)
 
         # Evaluate % of drug targets in top scores
-        score_result = evaluate_score_fn(df=df, drug_reference=drug_reference, printer=False, **score_kwargs)
+        score_result = evaluate_score_fn(df=df, drug_reference=curdrugref, printer=False, **score_kwargs)
 
         # Evaluate OR, p-value, n
-        or_result = evaluate_or_fn(reference=drug_reference, mydf=df, printer=False, **or_kwargs)
+        or_result = evaluate_or_fn(reference=curdrugref, mydf=df, printer=False, **or_kwargs)
 
         if verbose:
-            print(f"Successfully processed {trait}")
+            print(f"Successfully processed {trait}, target: {curdrugref.shape}")
 
         # Package everything
         results[trait] = {
