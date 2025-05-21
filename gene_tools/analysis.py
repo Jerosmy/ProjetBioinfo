@@ -160,7 +160,7 @@ def evaluate_trait_scores(
         overlap = top_ids & drug_targets
         percent = 100 * len(overlap) / len(top_ids) if top_ids else 0.0
 
-        trait_result[col] = percent
+        trait_result[col] = round(percent,3)
 
         if printer:
             print(f"[{trait_name}] {col}: {percent:.2f}% overlap")
