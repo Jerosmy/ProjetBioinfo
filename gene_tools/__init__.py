@@ -8,7 +8,7 @@ from .analysis import evaluate_OR, evaluate_trait_scores, run_full_trait_pipelin
 from .preproc import foldersLoad, cleanDic
 from .scoring import compute_scores, geneScores, NA_filtering
 from .analysis import NaCount
-from .vizu import compare_percentiles_boxplot
+from .vizu import compare_drug_target_percentiles
 
 __all__ = [
     "foldersLoad",
@@ -24,5 +24,5 @@ __all__ = [
     "evaluate_OR",
     "evaluate_trait_scores",
     "run_full_trait_pipeline",
-    "compare_percentiles_boxplot"
+    "compare_drug_target_percentiles"
 ]
