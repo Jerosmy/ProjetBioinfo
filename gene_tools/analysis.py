@@ -1,3 +1,7 @@
+import numpy as np
+from scipy.stats import fisher_exact
+import pandas as pd
+from scipy.stats import fisher_exact
 
 def NaCount(dataframe, show=False):
     """
@@ -42,11 +46,6 @@ def NaCount(dataframe, show=False):
 
 
 
-
-from scipy.stats import fisher_exact
-import pandas as pd
-
-from scipy.stats import fisher_exact
 
 def evaluate_OR(
     reference,
@@ -105,14 +104,15 @@ def evaluate_OR(
 
         oddsratio, p_value = fisher_exact([[A, B], [C, D]])
 
-        if printer:
-            print(f"[{trait_name}] {col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in {desc} = {A}")
+        #if printer:
+        #    print(f"[{trait_name}] {col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in {desc} = {A}")
+#
+        #trait_result[col] = [np.round(oddsratio,3).item(), np.round(p_value,3).item(), np.round(A,3)]
 
-        trait_result[col] = [round(oddsratio,3), round(p_value,3), round(A,3)]
 
+    #results[trait_name] = trait_result
+    return print(type(oddsratio), type(p_value))   #results
 
-    results[trait_name] = trait_result
-    return results
 
 
 
@@ -173,8 +173,8 @@ def run_full_trait_pipeline(
     trait_dict,
     drug_reference,
     scoring_functions,
-    evaluate_score_fn,
-    evaluate_or_fn,
+    evaluate_score_fn = evaluate_trait_scores,
+    evaluate_or_fn  = evaluate_OR,
     score_kwargs=None,
     or_kwargs=None,
     verbose=True
@@ -182,7 +182,8 @@ def run_full_trait_pipeline(
     """
     Run scoring + evaluation across all traits in a dictionary of DataFrames.
 
-    Parameters:
+
+    Args:
     - trait_dict (dict): {trait_name: df}
     - drug_reference (pd.DataFrame): merged drug reference with 'trait', 'Sum', 'EnsemblId'
     - scoring_functions (list): list of functions like [Mean, Max, Min, Median, Product]
