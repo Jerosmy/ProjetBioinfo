@@ -60,10 +60,6 @@ def evaluate_OR(
         raise ValueError(f"Expected exactly one unique 'Trait' in df, found: {trait_col_values}")
     trait_name = trait_col_values[0]
 
-    # Filter to shared genes only
-    valid_ids = set(mydf["EnsemblId"]) & set(reference["EnsemblId"])
-    mydf = mydf[mydf["EnsemblId"].isin(valid_ids)]
-    reference = reference[reference["EnsemblId"].isin(valid_ids)]
 
     results = {}
     drug_targets = set(reference.loc[reference["Sum"] >= sum_threshold, "EnsemblId"])
@@ -115,12 +111,6 @@ def evaluate_trait_scores(
     if len(trait_col_values) != 1:
         raise ValueError(f"Expected exactly one unique 'Trait' in df, found: {trait_col_values}")
     trait_name = trait_col_values[0]
-
-    # Filter to shared genes only
-    drug_reference = drug_reference[drug_reference["trait"] == trait_name]
-    valid_ids = set(df["EnsemblId"]) & set(drug_reference["EnsemblId"])
-    df = df[df["EnsemblId"].isin(valid_ids)]
-    drug_reference = drug_reference[drug_reference["EnsemblId"].isin(valid_ids)]
 
     results = {}
     drug_targets = set(drug_reference[drug_reference["Sum"] >= targetthreshold]["EnsemblId"])
