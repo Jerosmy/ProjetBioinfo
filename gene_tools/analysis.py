@@ -47,11 +47,13 @@ def NaCount(dataframe, show=False):
 
 
 from scipy.stats import fisher_exact
+from scipy.stats import fisher_exact
 
 def evaluate_OR(
     reference,
     mydf,
-    score_cols=["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median", "Prioscore_product"],
+    scoring_functions=None,
+    score_cols=None,
     sum_threshold=3,
     cutoff=0.01,
     method="topvalues",  # or 'lessthan'
@@ -61,33 +63,54 @@ def evaluate_OR(
     Compute odds ratios and Fisher's exact test p-values for enrichment of drug targets
     among top-ranked genes based on prioritization scores.
 
-    Now auto-filters `reference` to the trait in `mydf`.
+    Now:
+      - auto-filters `reference` to the trait in `mydf`
+      - applies `scoring_functions` to `mydf` to generate Prioscore_* columns
+      - if `score_cols` is None, auto-detects any column starting with "Prioscore_"
     """
-    # Extract trait name (must be exactly one)
-    trait_col_values = mydf["Trait"].dropna().unique()
-    if len(trait_col_values) != 1:
-        raise ValueError(f"Expected exactly one unique 'Trait' in df, found: {trait_col_values}")
-    trait_name = trait_col_values[0]
+    # 1) Infer trait name
+    trait_vals = mydf["Trait"].dropna().unique()
+    if len(trait_vals) != 1:
+        raise ValueError(f"Expected exactly one unique 'Trait' in df, found: {trait_vals}")
+    trait_name = trait_vals[0]
 
-    # *** NEW: filter reference to this trait ***
-    if "Trait" in reference.columns:
-        reference = reference[reference["Trait"] == trait_name]
+    # 2) Filter reference to this trait (works whether column is 'Trait' or 'trait')
+    ref = reference
+    if "Trait" in ref.columns:
+        ref = ref[ref["Trait"] == trait_name]
+    elif "trait" in ref.columns:
+        ref = ref[ref["trait"] == trait_name]
 
-    # Build set of true drug targets for this trait
-    drug_targets = set(reference.loc[reference["Sum"] >= sum_threshold, "EnsemblId"])
-    all_ids      = set(mydf["EnsemblId"])
+    # 3) Copy & apply scoring functions to build Prioscore_* columns
+    df_proc = mydf.copy()
+    if scoring_functions:
+        for fn in scoring_functions:
+            df_proc = fn(df_proc)
 
-    # Prepare results container
+    # 4) Decide which columns to evaluate
+    if score_cols is None:
+        score_cols = [c for c in df_proc.columns if c.startswith("Prioscore_")]
+    else:
+        missing = [c for c in score_cols if c not in df_proc.columns]
+        if missing:
+            raise KeyError(f"Score columns not found: {missing}")
+
+    # 5) Build sets for Fisher’s test
+    drug_targets = set(ref.loc[ref["Sum"] >= sum_threshold, "EnsemblId"])
+    all_ids      = set(df_proc["EnsemblId"])
+
     results = {}
     trait_result = {}
 
+    # 6) Compute OR + p-value per score column
     for col in score_cols:
         if method == "topvalues":
-            subset = mydf.sort_values(by=col, ascending=True).head(int(cutoff * len(mydf)))
-            desc   = f"top {cutoff * 100:.1f}%"
+            top_n = int(cutoff * len(df_proc))
+            subset = df_proc.sort_values(by=col, ascending=True).head(top_n)
+            desc   = f"top {cutoff*100:.1f}%"
         elif method == "lessthan":
-            subset = mydf[mydf[col] < cutoff * 100]
-            desc   = f"score < {cutoff * 100}"
+            subset = df_proc[df_proc[col] < cutoff * 100]
+            desc   = f"score < {cutoff*100}"
         else:
             raise ValueError("Invalid method: choose 'topvalues' or 'lessthan'")
 
