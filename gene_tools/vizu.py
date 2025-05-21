@@ -102,7 +102,7 @@ def compare_percentiles_boxplot(
     top_method_vals = df_clean.nsmallest(n, method_col)[method_col]
     top_reference_vals = df_clean.nsmallest(n, ref_col)[ref_col]
 
-    t_stat, p_val = ttest_ind(top_method_vals, top_reference_vals, alternative="greater")
+    t_stat, p_val = ttest_ind(top_method_vals, top_reference_vals, alternative="less")
 
     plot_df = pd.DataFrame({
         f"Prioscore_{method}": top_method_vals,
