@@ -58,3 +58,63 @@ def exploPlot(all_dat, trait="LDL", method="GWAS", save_path="expl_analysis.png"
         plt.show()
 
     plt.close()
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import ttest_ind
+import pandas as pd
+
+def compare_percentiles_boxplot(
+    df,
+    trait,
+    method,             # e.g. "mean", "median", "max"
+    reference_method,   # e.g. "GWAS", "eQTL"
+    cutoff=0.01
+):
+    """
+    Compare percentile values from:
+    - top X% genes based on Prioscore_{method}
+    - top X% genes based on {reference_method}_percentile
+
+    Performs one-sided t-test (H1: Prioscore > reference).
+
+    Parameters:
+    - df: DataFrame
+    - trait: str, for plot title
+    - method: str, e.g. 'mean', 'median', 'product'
+    - reference_method: str, e.g. 'GWAS', 'eQTL'
+    - cutoff: float, top X% (e.g. 0.01 for top 1%)
+
+    Returns:
+    - t-stat, p-value
+    - boxplot
+    """
+
+    method_col = f"Prioscore_{method}"
+    ref_col = f"{reference_method}_percentile"
+
+    if method_col not in df.columns or ref_col not in df.columns:
+        raise ValueError(f"Missing columns: '{method_col}' or '{ref_col}'")
+
+    df_clean = df[[method_col, ref_col]].dropna()
+    n = int(len(df_clean) * cutoff)
+
+    top_method_vals = df_clean.nsmallest(n, method_col)[method_col]
+    top_reference_vals = df_clean.nsmallest(n, ref_col)[ref_col]
+
+    t_stat, p_val = ttest_ind(top_method_vals, top_reference_vals, alternative="greater")
+
+    plot_df = pd.DataFrame({
+        f"Prioscore_{method}": top_method_vals,
+        f"{reference_method}_percentile": top_reference_vals
+    }).melt(var_name="Method", value_name="Percentile")
+
+    plt.figure(figsize=(8, 6))
+    sns.boxplot(x="Method", y="Percentile", data=plot_df)
+    plt.title(f"{trait} — Top {int(cutoff*100)}% comparison\nT = {t_stat:.2f}, p = {p_val:.2e}")
+    plt.ylabel("Percentile")
+    plt.grid(True, linestyle="--", alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+    return t_stat, p_val
