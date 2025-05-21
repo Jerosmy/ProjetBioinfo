@@ -62,7 +62,7 @@ def evaluate_prioritization(reference, mydf, score_cols = ["Prioscore_mean", "Pr
         Nothing (prints OR, p-value, and count of overlapping drug targets).
     """
     if score_cols is None:
-        score_cols = ["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median"]
+        score_cols = ["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median","PCA"]
 
     drug_targets = set(reference.loc[reference["Sum"] >= sum_threshold, "EnsemblId"])
     all_ids = set(mydf["EnsemblId"])

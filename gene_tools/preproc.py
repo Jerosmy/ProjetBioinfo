@@ -94,3 +94,6 @@ def cleanDic(raw_dict, method_names = ['eQTL', 'Exome', 'GWAS', 'pQTL']):
         result[trait] = merged_df
 
     return result
+
+def gettargets(folder,threshold) : 
+
