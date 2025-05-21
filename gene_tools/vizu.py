@@ -63,57 +63,90 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import ttest_ind
 import pandas as pd
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import ttest_ind
 
-def compare_percentiles_boxplot(
+def compare_drug_target_percentiles(
     df,
+    merged,
     trait,
-    method,             # e.g. "mean", "median", "max"
-    reference_method,   # e.g. "GWAS", "eQTL"
-    cutoff=0.01
+    reference_method="GWAS",
+    method="min",
+    targetthreshold=3
 ):
     """
-    Compare percentile values from:
-    - top X% genes based on Prioscore_{method}
-    - top X% genes based on {reference_method}_percentile
+    For a given trait, compare the percentile distributions of your drug targets
+    between the GWAS reference and Prioscore_min, via:
+      - one-sided t-test (H1: Prioscore_min < GWAS)
+      - side-by-side boxplots
 
-    Performs one-sided t-test (H1: Prioscore > reference).
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Trait-specific table. Must contain columns:
+          - "Trait"
+          - "EnsemblId"
+          - "{reference_method}_percentile"  (e.g. "GWAS_percentile")
+          - "Prioscore_{method}"             (e.g. "Prioscore_min")
+    merged : pd.DataFrame
+        Full drug-reference table. Must contain columns:
+          - "Trait" or "trait"
+          - "EnsemblId"
+          - "Sum"
+    trait : str
+        Which trait to pull (matches df["Trait"] and merged["Trait"]).
+    reference_method : str, default "GWAS"
+        Prefix of the percentile column in `df` (e.g. "GWAS" → "GWAS_percentile").
+    method : str, default "min"
+        Suffix for the Prioscore column (e.g. "min" → "Prioscore_min").
+    targetthreshold : int, default 3
+        Minimum `Sum` in `merged` to call a row a drug target.
 
-    Parameters:
-    - df: DataFrame
-    - trait: str, for plot title
-    - method: str, e.g. 'mean', 'median', 'product'
-    - reference_method: str, e.g. 'GWAS', 'eQTL'
-    - cutoff: float, top X% (e.g. 0.01 for top 1%)
-
-    Returns:
-    - t-stat, p-value
-    - boxplot
+    Returns
+    -------
+    t_stat : float
+        t‐statistic for the one‐sided test.
+    p_val : float
+        p‐value for the one‐sided test.
     """
+    # 1) Filter to just that trait in both tables
+    df_t = df[df["Trait"] == trait]
+    key_trait = "Trait" if "Trait" in merged.columns else "trait"
+    dr_t = merged[(merged[key_trait] == trait) & (merged["Sum"] >= targetthreshold)]
 
-    method_col = f"Prioscore_{method}"
-    ref_col = f"{reference_method}_percentile"
+    # 2) Restrict to drug‐target genes
+    target_ids = set(dr_t["EnsemblId"])
+    df_t  = df_t[df_t["EnsemblId"].isin(target_ids)]
+    if df_t.empty:
+        raise ValueError(f"No drug targets found for trait {trait} with Sum>={targetthreshold}")
 
-    if method_col not in df.columns or ref_col not in df.columns:
-        raise ValueError(f"Missing columns: '{method_col}' or '{ref_col}'")
+    # 3) Grab the two columns
+    ref_col    = f"{reference_method}_percentile"
+    prio_col   = f"Prioscore_{method}"
+    for col in (ref_col, prio_col):
+        if col not in df_t.columns:
+            raise KeyError(f"Column {col!r} not in df for trait {trait}")
 
-    df_clean = df[[method_col, ref_col]].dropna()
-    n = int(len(df_clean) * cutoff)
+    ref_vals  = df_t[ref_col]
+    prio_vals = df_t[prio_col]
 
-    top_method_vals = df_clean.nsmallest(n, method_col)[method_col]
-    top_reference_vals = df_clean.nsmallest(n, ref_col)[ref_col]
+    # 4) One‐sided t-test: H1 = Prioscore_min < GWAS
+    t_stat, p_val = ttest_ind(prio_vals, ref_vals, alternative="less")
 
-    t_stat, p_val = ttest_ind(top_method_vals, top_reference_vals, alternative="less")
-
+    # 5) Build the boxplot
     plot_df = pd.DataFrame({
-        f"Prioscore_{method}": top_method_vals,
-        f"{reference_method}_percentile": top_reference_vals
+        reference_method:   ref_vals,
+        f"Prioscore_{method}": prio_vals
     }).melt(var_name="Method", value_name="Percentile")
 
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6,6))
     sns.boxplot(x="Method", y="Percentile", data=plot_df)
-    plt.title(f"{trait} — Top {float(cutoff*100)}% comparison\nT = {t_stat:.2f}, p = {p_val:.2e}")
+    plt.title(f"{trait} drug‐targets: {reference_method} vs Prioscore_{method}\n"
+              f"T = {t_stat:.2f}, p = {p_val:.2e}")
     plt.ylabel("Percentile")
-    plt.grid(True, linestyle="--", alpha=0.3)
+    plt.grid(linestyle="--", alpha=0.3)
     plt.tight_layout()
     plt.show()
 
