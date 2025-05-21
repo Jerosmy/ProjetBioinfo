@@ -111,7 +111,7 @@ def compare_percentiles_boxplot(
 
     plt.figure(figsize=(8, 6))
     sns.boxplot(x="Method", y="Percentile", data=plot_df)
-    plt.title(f"{trait} — Top {int(cutoff*100)}% comparison\nT = {t_stat:.2f}, p = {p_val:.2e}")
+    plt.title(f"{trait} — Top {float(cutoff*100)}% comparison\nT = {t_stat:.2f}, p = {p_val:.2e}")
     plt.ylabel("Percentile")
     plt.grid(True, linestyle="--", alpha=0.3)
     plt.tight_layout()
