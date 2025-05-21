@@ -167,3 +167,61 @@ def evaluate_trait_scores(
 
     results[trait_name] = trait_result
     return results
+
+
+def run_full_trait_pipeline(
+    trait_dict,
+    drug_reference,
+    scoring_functions,
+    evaluate_score_fn,
+    evaluate_or_fn,
+    score_kwargs=None,
+    or_kwargs=None,
+    verbose=True
+):
+    """
+    Run scoring + evaluation across all traits in a dictionary of DataFrames.
+
+    Parameters:
+    - trait_dict (dict): {trait_name: df}
+    - drug_reference (pd.DataFrame): merged drug reference with 'trait', 'Sum', 'EnsemblId'
+    - scoring_functions (list): list of functions like [Mean, Max, Min, Median, Product]
+    - evaluate_score_fn (func): function like evaluate_trait_scores
+    - evaluate_or_fn (func): function like evaluate_OR
+    - score_kwargs (dict): optional kwargs for evaluate_score_fn
+    - or_kwargs (dict): optional kwargs for evaluate_or_fn
+
+    Returns:
+    - dict: {trait: {'data': df_with_scores, 'score_eval': %, 'OR_eval': [OR, p, n]}}
+    """
+    if score_kwargs is None:
+        score_kwargs = {}
+    if or_kwargs is None:
+        or_kwargs = {}
+
+    results = {}
+
+    for trait, df in trait_dict.items():
+        df = df.copy()
+
+        # Apply all scoring functions
+        for func in scoring_functions:
+            df = func(df)
+
+        # Evaluate % of drug targets in top scores
+        score_result = evaluate_score_fn(df=df, drug_reference=drug_reference, printer=False, **score_kwargs)
+
+        # Evaluate OR, p-value, n
+        or_result = evaluate_or_fn(reference=drug_reference, mydf=df, printer=False, **or_kwargs)
+
+        if verbose:
+            print(f"Successfully processed {trait}")
+
+        # Package everything
+        results[trait] = {
+            "data": df,
+            "score_eval": list(score_result.values())[0], 
+            "OR_eval": list(or_result.values())[0]        
+        }
+
+    return results
