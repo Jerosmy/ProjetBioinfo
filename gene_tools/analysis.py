@@ -45,7 +45,7 @@ def NaCount(dataframe, show=False):
 
 from scipy.stats import fisher_exact
 
-def evaluate_prioritization(reference, mydf, score_cols = ["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median"]
+def evaluate_OR(reference, mydf, score_cols = ["Prioscore_mean", "Prioscore_max", "Prioscore_min", "Prioscore_median"]
 , sum_threshold=3, top_percent=0.01):
     """
     Compute odds ratios and Fisher's exact test p-values for enrichment of drug targets
@@ -82,5 +82,47 @@ def evaluate_prioritization(reference, mydf, score_cols = ["Prioscore_mean", "Pr
 
         print(f"{col}: OR = {oddsratio:.2f}, p = {p_value:.4e}, drug targets in top {float(top_percent * 100)}% = {A}")
         
+def evaluate_score_overlap(
+    df,
+    score_cols,
+    drug_targets,
+    method="topvalues",
+    threshold=0.01,
+    verbose=True
+):
+    """
+    Evaluate overlap between top-scored genes and known drug targets.
+
+    Parameters:
+    - df (pd.DataFrame): The trait-specific DataFrame.
+    - score_cols (list): List of score column names to evaluate.
+    - drug_targets (set): Set of known drug target Ensembl IDs for the trait.
+    - method (str): "topvalues" for top X%, "lessthan" for values below threshold.
+    - threshold (float): Top X percent or value cutoff.
+    - verbose (bool): Print results if True.
+
+    Returns:
+    - dict: A dictionary {score_col: overlap_percent}
+    """
+    results = {}
+    n = len(df)
+
+    for col in score_cols:
+        if method == "topvalues":
+            subset = df.sort_values(by=col, ascending=True).head(int(threshold * n))
+        elif method == "lessthan":
+            subset = df[df[col] < threshold]
+        else:
+            raise ValueError("Invalid method: choose 'topvalues' or 'lessthan'")
+
+        top_ids = set(subset["EnsemblId"])
+        overlap = top_ids & drug_targets
+        percent = 100 * len(overlap) / len(top_ids) if top_ids else 0.0
+        results[col] = percent
+
+        if verbose:
+            print(f"{col}: {percent:.2f}% of top genes are drug targets")
+
+    return results
 
 
