@@ -65,7 +65,6 @@ def pca(stat_df,
         the pca results ('pca'), if explicit == True
 
     """
-    results = {}
     if wrk_df is None :
         wrk_df = stat_df
     
@@ -86,11 +85,6 @@ def pca(stat_df,
     pca_model = PCA(n_components=2)
     df_pca = pca_model.fit_transform(zscores)
 
-    if explicit :
-        #Isolate principal components
-        pca_df = pd.DataFrame(df_pca, columns=[f"PC{i+1}" for i in range(df_pca.shape[1])], index=zscores.index)
-        results['pca'] = pca_df
-
     # Create a Series with PCA scores indexed like `filtered`
     pca_scores = pd.Series(df_pca[:, 0], index=filtered.index, name="PCA")
 
@@ -98,7 +92,8 @@ def pca(stat_df,
     #PC axes have arbitrary orientation, see how it correlates with the pvals and invert if needed
     corr, _ = spearmanr(pca_scores, stat_df[p_valcols].mean(axis=1))
     if corr > 0: # type: ignore (turns off unesceary warnings)
-        pca_scores *= -1  # Inverts PCA values that are inverted
+        pca_scores *= -1  # Inverts PCA values that are inverted (i.e. if big 1stPC val is also with big pval)
+    print(corr)
 
     if plot_cor:
         mean_pval = stat_df[p_valcols].median(axis=1)
@@ -111,14 +106,21 @@ def pca(stat_df,
         print(corr)
 
     #Sort it and transform in percentile
-    sorted_pca = pd.Series((1 - ((pca_scores.rank(method='min') / pca_scores.shape[0]))*100), index = pca_scores.index, name = "Prioscore_PCA")
+    sorted_pca = pd.Series(100 * (1 - (pca_scores.rank(method='min') / pca_scores.shape[0])), index=pca_scores.index, name="Prioscore_PCA")
 
     # Copy original df and add PCA column where possible
     df_with_pca = wrk_df.copy()
     df_with_pca.loc[pca_scores.index, "Prioscore_PCA"] = sorted_pca
 
-    results['zscores'] = zscores
-    results['full_df'] = df_with_pca
+    if explicit :
+        results = {}
+        #Isolate principal components
+        pca_df = pd.DataFrame(df_pca, columns=[f"PC{i+1}" for i in range(df_pca.shape[1])], index=zscores.index)
+        results['pca'] = pca_df
+        results['zscores'] = zscores
+        results['full_df'] = df_with_pca
+    else :
+        results = df_with_pca
 
     return results
 
