@@ -71,7 +71,10 @@ def pca(stat_df,
     p_valcols = [col for col in stat_df.columns if col.endswith("_pvalue")]
 
     if filling == "fill":
-        stat_df[p_valcols] = stat_df[p_valcols].T.fillna(stat_df[p_valcols].median(axis=1)).T
+        medians = stat_df[p_valcols].median(axis=1)
+        stat_df[p_valcols] = stat_df[p_valcols].apply(
+            lambda row: row.fillna(medians[row.name]), axis=1
+        )
     elif filling == 'drop' :
         stat_df = stat_df.dropna()
 
