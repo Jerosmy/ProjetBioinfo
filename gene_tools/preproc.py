@@ -75,7 +75,7 @@ def cleanDic(raw_dict, method_names = ['eQTL', 'Exome', 'GWAS', 'pQTL'], output 
                 else :
                     df_temp["Score"] = df_temp['p_value']
 
-                df_temp['Rank'] = df_temp['Score'].rank()
+                df_temp['Rank'] = df_temp['Score'].rank(method = "min")
                 df_temp['Percentile'] = (df_temp['Rank'] / len(df_temp)) * 100
                 # Rename columns
                 rename_dict = {}
